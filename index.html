@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>שיעור 9: פרוטוקול STP ומניעת לופים | האקדמיה לרשתות</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Heebo', sans-serif;
+            background-color: #020617; /* Dark Slate Blue/Green */
+            background: linear-gradient(135deg, #020617 0%, #06130d 100%);
+            color: #f1f5f9;
+        }
+        .code-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #22c55e;
+            border-radius: 3px;
+        }
+        
+        /* Loop Animation Effects */
+        @keyframes storm-spin {
+            0% { transform: rotate(0deg); border-color: #22c55e; }
+            50% { border-color: #ef4444; }
+            100% { transform: rotate(360deg); border-color: #22c55e; }
+        }
+        .storm-active {
+            animation: storm-spin 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+    <!-- TOP BAR -->
+    <header class="border-b border-emerald-950 bg-slate-950/90 backdrop-blur sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-600/20 p-2 rounded-lg border border-emerald-500/30 text-emerald-400">
+                    <i data-lucide="git-fork" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-lg tracking-wide text-white">NET_ACADEMY // <span class="text-emerald-400">CLASS_09</span></h1>
+                    <p class="text-xs text-slate-400">פרוטוקול STP: מניעת סופות שידור ולופים ברשת השרידה</p>
+                </div>
+            </div>
+            
+            <!-- Gamification & Progress Status -->
+            <div class="flex items-center gap-6">
+                <div class="hidden md:flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+                    <span class="text-xs text-slate-400">רמה:</span>
+                    <span class="text-xs font-bold text-emerald-400" id="user-level">רב-נתב ואשף NAT</span>
+                    <div class="w-16 bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div id="level-bar" class="bg-emerald-550 h-full w-[90%] transition-all duration-500"></div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-emerald-400">
+                    <i data-lucide="zap" class="w-4 h-4 text-yellow-400 animate-pulse"></i>
+                    <span class="text-xs font-bold">XP:</span>
+                    <span class="text-sm font-black code-font text-emerald-300" id="xp-counter">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN BODY -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- SIDEBAR -->
+        <aside class="lg:col-span-3 flex flex-col gap-4">
+            <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5">
+                <h3 class="text-sm font-bold text-slate-300 mb-4 tracking-wider uppercase border-b border-slate-800 pb-2">מפת המשימה</h3>
+                <nav class="flex flex-col gap-2">
+                    <!-- Step 1 -->
+                    <button id="btn-step-1" onclick="switchStep(1)" class="w-full text-right flex items-center justify-between p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/40 text-emerald-350 transition-all font-bold">
+                        <div class="flex items-center gap-3">
+                            <span class="code-font text-xs opacity-60">01.</span>
+                            <span>מלכודת השרידות</span>
+                        </div>
+                        <i data-lucide="help-circle" class="w-4 h-4 text-emerald-400"></i>
+                    </button>
+                    <!-- Step 2 -->
+                    <button id="btn-step-2" onclick="switchStep(2)" class="w-full text-right flex items-center justify-between p-3 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="code-font text-xs opacity-60">02.</span>
+                            <span>אלגוריתם עץ פורש (STP)</span>
+                        </div>
+                        <i data-lucide="book-open" class="w-4 h-4 opacity-50"></i>
+                    </button>
+                    <!-- Step 3 -->
+                    <button id="btn-step-3" onclick="switchStep(3)" class="w-full text-right flex items-center justify-between p-3 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all">
+                        <div class="flex items-center justify-between p-3 rounded-lg text-slate-400">
+                            <div class="flex items-center gap-3">
+                                <span class="code-font text-xs opacity-60">03.</span>
+                                <span>סימולטור בחירת Root Bridge</span>
+                            </div>
+                            <i data-lucide="cpu" class="w-4 h-4 opacity-50"></i>
+                        </div>
+                    </button>
+                    <!-- Step 4 -->
+                    <button id="btn-step-4" onclick="switchStep(4)" class="w-full text-right flex items-center justify-between p-3 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="code-font text-xs opacity-60">04.</span>
+                            <span>עוזר מעבדה חכם (AI)</span>
+                        </div>
+                        <i data-lucide="terminal" class="w-4 h-4 opacity-50"></i>
+                    </button>
+                    <!-- Step 5 -->
+                    <button id="btn-step-5" onclick="switchStep(5)" class="w-full text-right flex items-center justify-between p-3 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="code-font text-xs opacity-60">05.</span>
+                            <span>דוח סיכום והישגים</span>
+                        </div>
+                        <i data-lucide="award" class="w-4 h-4 opacity-50"></i>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- SYSTEM LOG -->
+            <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 flex-grow flex flex-col justify-between">
+                <div>
+                    <h4 class="text-xs font-bold text-slate-400 tracking-wider mb-3">יומן STP (STP Monitor)</h4>
+                    <div id="system-log" class="text-xs code-font text-emerald-400/80 space-y-2 h-48 overflow-y-auto bg-slate-900/50 p-3 rounded border border-slate-800">
+                        <p>[12:00:01] פרוטוקול IEEE 802.1D (STP) הופעל בהצלחה.</p>
+                        <p>[12:00:02] ממתין לשליחת חבילות BPDU ראשוניות...</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-800/50">
+                    <button onclick="resetProgress()" class="text-xs text-red-400 hover:text-red-300 flex items-center gap-1.5 transition-colors">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>אפס התקדמות שיעור</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- CONTENT DISPLAY AREA -->
+        <section class="lg:col-span-9 flex flex-col gap-6">
+
+            <!-- STEP 1: THE DISASTER OF REDUNDANCY -->
+            <div id="step-1" class="step-container space-y-6">
+                <div class="bg-gradient-to-r from-emerald-950/40 to-slate-950 border border-emerald-900/40 rounded-2xl p-6 md:p-8 relative overflow-hidden">
+                    <div class="absolute -right-20 -top-20 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                    <span class="bg-emerald-900/60 border border-emerald-400/30 text-emerald-350 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-widest">סכנת השרידות</span>
+                    
+                    <h2 class="text-2xl md:text-3xl font-black text-white mt-4 mb-3">מלכודת השרידות: כשהיתרון הופך לאסון</h2>
+                    <p class="text-slate-300 leading-relaxed text-base">
+                        תארו לעצמכם שאתם מקימים רשת עבור בנק גדול. אתם רוצים לוודא שאם עובד בניקיון מנתק בטעות כבל רשת בין שני מתגים (Switches) מרכזיים, הבנק לא יפסיק לעבוד. 
+                        מה תעשו? פשוט מאוד: תחברו **כבל גיבוי נוסף** שיוצר מעגל סגור (Loop) בין המתגים. 
+                        <br><br>
+                        על הנייר זה נשמע מושלם. בפועל, כאן מתחיל הסיוט הגדול: ברגע שמחשב כלשהו ישלח הודעת Broadcast אחת פשוטה (כמו בקשת ARP למציאת שער ברירת המחדל), החבילה תעבור למתג א', מתג א' יעביר אותה למתג ב' דרך שני הכבלים, והם ימשיכו להחזיר ולשכפל אותה אחד לשני במעגל סגור לנצח!
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                            <h3 class="text-red-400 font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="zap-off" class="w-5 h-5"></i>
+                                סופת שידור (Broadcast Storm)
+                            </h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                מכיוון שלפריים בשכבה 2 (Data Link) אין מנגנון TTL (זמן חיים בשניות/צעדים), חבילת ה-Broadcast תסתובב ותשתכפל מיליארדי פעמים בשנייה. הדבר ינצל 100% מרוחב הפס ומכוח העיבוד של המכשירים, ויקריס את הרשת כולה באופן מיידי.
+                            </p>
+                        </div>
+                        <div class="bg-slate-900 border border-slate-800 p-5 rounded-xl">
+                            <h3 class="text-emerald-400 font-bold mb-2 flex items-center gap-2">
+                                <i data-lucide="git-pull-request" class="w-5 h-5"></i>
+                                המושיע: Spanning Tree Protocol
+                            </h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                פרוטוקול **STP** פותר את הבעיה: הוא מזהה את הלופ הפיזי ברשת, ומחליט באופן אוטומטי ולוגי **לחסום (Block)** את אחד הפורטים הפיזיים ברשת כדי לשבור את הלופ. אם כבל אחר ייקרע, ה-STP יפתח את הפורט החסום מחדש תוך שניות!
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-slate-900/50 p-5 rounded-xl border border-slate-800/80">
+                        <p class="text-xs text-slate-300 font-bold mb-3">עצור וחשוב: מה דומה לפעולת ה-STP למניעת לופים בחיי היום-יום?</p>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="answerScenario(1)" class="bg-slate-950 hover:bg-slate-800 text-right border border-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded transition-all">מערכת רמזורים חכמה בצומת דרכים פקוקה שמווסתת את כיוון הנסיעה כדי למנוע תאונות ועומס בלתי סביר.</button>
+                            <button onclick="answerScenario(2)" class="bg-slate-950 hover:bg-slate-800 text-right border border-slate-700 text-slate-300 text-xs px-4 py-2.5 rounded transition-all">גלאי עשן ומים ארגוני שמנתק אוטומטית את זרם החשמל הראשי בבניין ברגע שהוא מזהה קצר חשמלי או רטיבות.</button>
+                        </div>
+                        <div id="scenario-feedback" class="mt-4 hidden p-3 rounded-lg text-xs font-semibold"></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end">
+                    <button onclick="switchStep(2)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <span>למד את אלגוריתם ה-STP</span>
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 2: STP CORE THEORY -->
+            <div id="step-2" class="step-container space-y-6 hidden">
+                <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-6 md:p-8">
+                    <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider">תיאוריה חיונית</span>
+                    <h2 class="text-2xl font-black text-white mt-2 mb-4">איך STP בוחר איזה פורט לחסום?</h2>
+                    
+                    <p class="text-slate-350 leading-relaxed mb-6">
+                        כאשר אנו מחברים מתגי סיסקו ברשת, הם מתחילים לשלוח אחד לשני הודעות בקרה מיוחדות הנקראות **BPDU (Bridge Protocol Data Unit)**. דרכן הם מבצעים תהליך בחירה "דמוקרטי" שלב אחר שלב:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-slate-900 border border-slate-850 p-4 rounded-xl text-right">
+                            <span class="text-emerald-400 font-black code-font text-lg block mb-1">Step 1</span>
+                            <h3 class="text-white font-bold text-sm mb-1">בחירת ה-Root Bridge</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                המתגים בוחרים "נשיא" לרשת (המתג הראשי). הכלל פשוט: המתג בעל ה-**BID (Bridge ID) הנמוך ביותר** זוכה בנשיאות. ה-BID מורכב מערך עדיפות (Priority) וכתובת ה-MAC של המתג.
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-850 p-4 rounded-xl text-right">
+                            <span class="text-emerald-400 font-black code-font text-lg block mb-1">Step 2</span>
+                            <h3 class="text-white font-bold text-sm mb-1">סימון פורטי השורש</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                כל מתג שאינו הנשיא (Non-Root Bridge) בוחר פורט יחיד המכונה **Root Port (RP)**. זהו הפורט הפיזי בעל הדרך "הזולה ביותר" (הכי מהירה וקצרה) להגיע אל ה-Root Bridge.
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-900 border border-slate-850 p-4 rounded-xl text-right">
+                            <span class="text-emerald-400 font-black code-font text-lg block mb-1">Step 3</span>
+                            <h3 class="text-white font-bold text-sm mb-1">חסימת היתירות</h3>
+                            <p class="text-xs text-slate-400 leading-relaxed">
+                                כל פורט אחר שנשאר ללא תפקיד ובכך יוצר מעגל לוגי מוגדר מיד כפורט חסום – **Blocking Port (BLK)**. הפורט הזה יכבה לוגית את היכולת שלו לקבל או לשלוח מידע של משתמשים כדי לשבור את הלופ.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- STP Ports Status Table Visualizer -->
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-800 max-w-2xl mx-auto mt-6 space-y-4">
+                        <div class="text-center text-xs text-slate-400 font-bold">מצבי הפורטים של STP ברשת:</div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-right text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-800 text-slate-500 font-mono">
+                                        <th class="pb-2">מצב פורט (Port State)</th>
+                                        <th class="pb-2">האם מעביר מידע? (Forward Data)</th>
+                                        <th class="pb-2">האם לומד כתובות MAC? (Learn MACs)</th>
+                                        <th class="pb-2">תיאור תפקיד</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-slate-350 space-y-2">
+                                    <tr class="border-b border-slate-850">
+                                        <td class="py-2.5 text-emerald-400 font-bold">Forwarding (FWD)</td>
+                                        <td class="py-2.5 text-emerald-500">כן</td>
+                                        <td class="py-2.5 text-emerald-500">כן</td>
+                                        <td class="py-2.5">פורט פעיל לחלוטין המעביר נתונים (כמו Root Port או Designated Port).</td>
+                                    </tr>
+                                    <tr class="border-b border-slate-850">
+                                        <td class="py-2.5 text-amber-500 font-bold">Listening / Learning</td>
+                                        <td class="py-2.5 text-red-500">לא</td>
+                                        <td class="py-2.5 text-emerald-500">כן (רק ב-Learning)</td>
+                                        <td class="py-2.5">מצבי מעבר זמניים (נמשכים כ-15 שניות) כדי למנוע לופים בזמן בניית המפה.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 text-red-400 font-bold">Blocking (BLK)</td>
+                                        <td class="py-2.5 text-red-500">לא</td>
+                                        <td class="py-2.5 text-red-500">לא</td>
+                                        <td class="py-2.5">פורט חסום לוגית כדי לשבור את הלופ הפיזי ברשת.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between">
+                    <button onclick="switchStep(1)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold px-5 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        <span>חזרה למבוא</span>
+                    </button>
+                    <button onclick="switchStep(3)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <span>לסימולטור הבחירות של STP</span>
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 3: INTERACTIVE STP SIMULATOR -->
+            <div id="step-3" class="step-container space-y-6 hidden">
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8">
+                    <span class="bg-emerald-900/60 border border-emerald-400/30 text-emerald-350 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-widest">תחנת עבודה מעשית</span>
+                    <h2 class="text-2xl font-black text-white mt-3">סימולטור: בחירות ה-Root Bridge ושבירת הלופ</h2>
+                    <p class="text-slate-400 text-sm mt-1">
+                        לפניך טופולוגיית משולש של 3 מתגים המחוברים במעגל סגור. שנה את עדיפות ה-Priority של המתגים כדי לקבוע מי יהיה ה-Root Bridge ולראות איזה פורט ייחסם לוגית!
+                    </p>
+
+                    <div class="mt-8 bg-slate-900 rounded-xl p-6 border border-slate-800 relative">
+                        
+                        <!-- Visual Topology Diagram of 3 Switches -->
+                        <div class="relative w-full h-64 bg-slate-950 border border-slate-850 rounded-xl flex justify-center items-center">
+                            
+                            <!-- Top Switch (Switch 1) -->
+                            <div class="absolute top-4 text-center z-10">
+                                <div id="sw1-box" class="w-20 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center shadow-lg transition-all">
+                                    <i data-lucide="git-commit" class="w-6 h-6 text-slate-300"></i>
+                                    <span class="text-[9px] font-black text-white block">Switch 1</span>
+                                    <span id="sw1-priority-lbl" class="text-[8px] code-font text-emerald-450">Pri: 32768</span>
+                                </div>
+                                <span class="text-[8px] text-slate-500 font-mono block mt-1">MAC: 000A.1111.1111</span>
+                            </div>
+
+                            <!-- Left Switch (Switch 2) -->
+                            <div class="absolute bottom-6 left-12 md:left-24 text-center z-10">
+                                <div id="sw2-box" class="w-20 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center shadow-lg transition-all">
+                                    <i data-lucide="git-commit" class="w-6 h-6 text-slate-300"></i>
+                                    <span class="text-[9px] font-black text-white block">Switch 2</span>
+                                    <span id="sw2-priority-lbl" class="text-[8px] code-font text-emerald-450">Pri: 32768</span>
+                                </div>
+                                <span class="text-[8px] text-slate-500 font-mono block mt-1">MAC: 000B.2222.2222</span>
+                            </div>
+
+                            <!-- Right Switch (Switch 3) -->
+                            <div class="absolute bottom-6 right-12 md:right-24 text-center z-10">
+                                <div id="sw3-box" class="w-20 h-16 bg-slate-900 border-2 border-slate-700 rounded-xl flex flex-col items-center justify-center shadow-lg transition-all">
+                                    <i data-lucide="git-commit" class="w-6 h-6 text-slate-300"></i>
+                                    <span class="text-[9px] font-black text-white block">Switch 3</span>
+                                    <span id="sw3-priority-lbl" class="text-[8px] code-font text-emerald-450">Pri: 32768</span>
+                                </div>
+                                <span class="text-[8px] text-slate-500 font-mono block mt-1">MAC: 000C.3333.3333</span>
+                            </div>
+
+                            <!-- Connecting Cables SVG Graphic lines -->
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Switch 1 to Switch 2 -->
+                                <line x1="50%" y1="20%" x2="25%" y2="70%" stroke="#1e293b" stroke-width="3" id="line-1-2"></line>
+                                <!-- Switch 1 to Switch 3 -->
+                                <line x1="50%" y1="20%" x2="75%" y2="70%" stroke="#1e293b" stroke-width="3" id="line-1-3"></line>
+                                <!-- Switch 2 to Switch 3 -->
+                                <line x1="25%" y1="70%" x2="75%" y2="70%" stroke="#1e293b" stroke-width="3" id="line-2-3"></line>
+                            </svg>
+
+                            <!-- Storm Ring Circle Overlaid in the middle -->
+                            <div id="storm-overlay" class="absolute w-28 h-28 rounded-full border-4 border-dashed border-red-500/80 storm-active flex items-center justify-center hidden pointer-events-none">
+                                <span class="text-[9px] font-black text-red-500 uppercase tracking-widest animate-pulse">Storm Active</span>
+                            </div>
+
+                            <!-- Visual Block indicator -->
+                            <div id="blk-indicator" class="absolute hidden bg-red-600 text-white rounded-full p-1 border border-red-400 font-black text-[9px] z-35 flex items-center gap-0.5">
+                                <i data-lucide="shield-alert" class="w-3 h-3"></i>
+                                <span>PORT BLOCKED (STP)</span>
+                            </div>
+                        </div>
+
+                        <!-- Config controllers for Priorities -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
+                                <label class="block text-xs text-slate-400 mb-1">Priority: Switch 1</label>
+                                <select id="pri-sw1" onchange="recalculateStp()" class="bg-slate-900 text-xs text-white p-2 rounded border border-slate-800 focus:outline-none w-full">
+                                    <option value="32768">32768 (ברירת מחדל)</option>
+                                    <option value="4096">4096 (נמוך מאוד - חזק)</option>
+                                    <option value="61440">61440 (גבוה מאוד - חלש)</option>
+                                </select>
+                            </div>
+
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
+                                <label class="block text-xs text-slate-400 mb-1">Priority: Switch 2</label>
+                                <select id="pri-sw2" onchange="recalculateStp()" class="bg-slate-900 text-xs text-white p-2 rounded border border-slate-800 focus:outline-none w-full">
+                                    <option value="32768">32768 (ברירת מחדל)</option>
+                                    <option value="4096">4096 (נמוך מאוד - חזק)</option>
+                                    <option value="61440">61440 (גבוה מאוד - חלש)</option>
+                                </select>
+                            </div>
+
+                            <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 text-center">
+                                <label class="block text-xs text-slate-400 mb-1">Priority: Switch 3</label>
+                                <select id="pri-sw3" onchange="recalculateStp()" class="bg-slate-900 text-xs text-white p-2 rounded border border-slate-800 focus:outline-none w-full">
+                                    <option value="32768">32768 (ברירת מחדל)</option>
+                                    <option value="4096">4096 (נמוך מאוד - חזק)</option>
+                                    <option value="61440">61440 (גבוה מאוד - חלש)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Test Action Bar -->
+                        <div class="border-t border-slate-800 pt-4 mt-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-slate-950 p-3 rounded-lg">
+                            <div class="text-xs text-slate-400">
+                                <p class="font-bold text-white mb-0.5">פעולת גלישה ברשת:</p>
+                                <p>שגר שידור Broadcast וראה האם ה-STP חוסם את סופת השידור בהצלחה או שהרשת שלך קורסת!</p>
+                            </div>
+                            <button onclick="triggerStpTest()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 w-full sm:w-auto">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                <span>הפעל בדיקת שידור Broadcast</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <div id="sim-feedback" class="mt-4 hidden p-4 rounded-xl text-xs font-bold"></div>
+                </div>
+
+                <div class="flex justify-between">
+                    <button onclick="switchStep(2)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold px-5 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        <span>חזרה לתיאוריה</span>
+                    </button>
+                    <button id="btn-to-step-4" onclick="switchStep(4)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all disabled:opacity-40 disabled:pointer-events-none" disabled>
+                        <span>המשך לעוזר המעבדה AI</span>
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 4: AI LAB ASSISTANT (AI STEP) -->
+            <div id="step-4" class="step-container space-y-6 hidden">
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8">
+                    <div class="flex justify-between items-start flex-wrap gap-4 border-b border-slate-800 pb-4">
+                        <div>
+                            <span class="bg-emerald-950 border border-emerald-500/30 text-emerald-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-widest">סדנת AI מתקדמת</span>
+                            <h2 class="text-2xl font-black text-white mt-3">בוט עוזר מעבדה: AI Lab Assistant</h2>
+                            <p class="text-slate-400 text-sm mt-1">
+                                בשלב זה של הסדרה, אתה בונה את הפרומפט בעצמך! הנחה את בוט המעבדה לייצר לך תרחיש תרגול מעניין בפאקט טרייסר עם חוקי STP מוגדרים.
+                            </p>
+                        </div>
+                        <div class="bg-slate-900/80 border border-slate-800 px-3 py-1 rounded text-xs text-emerald-400 code-font flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>STATUS: READY_TO_DESIGN</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
+                        <!-- Left Side: Prompt Builder Panel -->
+                        <div class="md:col-span-5 bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                            <h3 class="text-xs font-bold text-white tracking-wide uppercase border-b border-slate-800 pb-2">הרכב דרישות למעבדה:</h3>
+                            
+                            <!-- Controller 1: Topology size -->
+                            <div>
+                                <label class="block text-xs text-emerald-400 font-bold mb-1">1. מספר מתגים (Switches):</label>
+                                <select id="ai-sw-count" onchange="updatePromptPreview()" class="w-full bg-slate-950 text-xs text-white p-2.5 rounded border border-slate-800 focus:outline-none focus:border-emerald-500">
+                                    <option value="none">-- בחר כמות מתגים --</option>
+                                    <option value="3">3 מתגים (משולש בסיסי)</option>
+                                    <option value="4">4 מתגים (מבנה ריבוע שריד ומורכב)</option>
+                                </select>
+                            </div>
+
+                            <!-- Controller 2: Redundancy Type -->
+                            <div>
+                                <label class="block text-xs text-emerald-400 font-bold mb-1">2. פרוטוקול STP מבוקש:</label>
+                                <select id="ai-stp-type" onchange="updatePromptPreview()" class="w-full bg-slate-950 text-xs text-white p-2.5 rounded border border-slate-800 focus:outline-none focus:border-emerald-500">
+                                    <option value="none">-- בחר פרוטוקול --</option>
+                                    <option value="pvst">PVST+ (פרוטוקול סיסקו רגיל לכל VLAN)</option>
+                                    <option value="rapid">Rapid PVST+ (מעבר מהיר של פאזות FWD)</option>
+                                </select>
+                            </div>
+
+                            <!-- Controller 3: Target Bridge Selection -->
+                            <div>
+                                <label class="block text-xs text-emerald-400 font-bold mb-1">3. הגדרת המתג הראשי הרצוי:</label>
+                                <select id="ai-target-root" onchange="updatePromptPreview()" class="w-full bg-slate-950 text-xs text-white p-2.5 rounded border border-slate-800 focus:outline-none focus:border-emerald-500">
+                                    <option value="none">-- בחר מתג ראשי --</option>
+                                    <option value="sw1">Switch 1 יהיה ה-Root Bridge הראשי</option>
+                                    <option value="sw2">Switch 2 יהיה ה-Root Bridge הראשי</option>
+                                </select>
+                            </div>
+
+                            <!-- Live Prompt Preview -->
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <span class="text-[9px] text-slate-500 block font-bold">הפרומפט המלא שיישלח לעוזר ה-AI:</span>
+                                <p id="prompt-preview" class="text-[11px] font-mono text-slate-400 mt-1 whitespace-pre-wrap">הגדר רכיבים משמאל...</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Side: AI Execution Output -->
+                        <div class="md:col-span-7 bg-slate-900 border border-slate-800 p-5 rounded-xl flex flex-col justify-between min-h-[400px]">
+                            <div>
+                                <h3 class="text-xs font-bold text-white mb-4">תוצר הוראות המעבדה לפאקט טרייסר (AI):</h3>
+                                <div id="ai-response-box" class="text-xs text-slate-300 leading-relaxed bg-slate-950 p-4 rounded-lg border border-slate-850 h-[280px] overflow-y-auto font-sans">
+                                    אנא הגדר את דרישות המעבדה משמאל, ולאחר מכן לחץ על "חולל מדריך מעבדה".
+                                </div>
+                            </div>
+
+                            <button onclick="runStpLabGenerator()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-lg text-xs transition-all flex items-center justify-center gap-2 mt-4">
+                                <i data-lucide="play" class="w-4 h-4"></i>
+                                <span>חולל מדריך מעבדה מלא</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Achievement Unlock Alert -->
+                    <div id="ai-bonus-alert" class="mt-4 hidden bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 p-4 rounded-xl flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xl">🏆</span>
+                            <div>
+                                <p class="font-bold">הישג נפתח! מפתח תרחישי רשתות (Network Lab Architect)</p>
+                                <p class="text-xs opacity-80">בנית בהצלחה פרומפט מעבדה שלם ואנליטי להפקת תרחישי STP בפאקט טרייסר.</p>
+                            </div>
+                        </div>
+                        <span class="font-mono text-xs text-emerald-400 font-bold">+100 XP</span>
+                    </div>
+
+                </div>
+                <div class="flex justify-between">
+                    <button onclick="switchStep(3)" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold px-5 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        <span>חזרה לסימולטור</span>
+                    </button>
+                    <button id="btn-to-step-5" onclick="switchStep(5)" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all disabled:opacity-40 disabled:pointer-events-none" disabled>
+                        <span>עבור לדוח סיום המשימה</span>
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STEP 5: REFLECTION & ACTION REPORT -->
+            <div id="step-5" class="step-container space-y-6 hidden">
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 md:p-8">
+                    <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider">משוב עמיתים וסגירת דוח</span>
+                    <h2 class="text-2xl font-black text-white mt-2 mb-4">תעודת מומחה ה-STP והשרידות שלך מוכנה!</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Reflection Form -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                            <h3 class="font-bold text-white text-base">רפלקציה עצמית למורה</h3>
+                            <p class="text-xs text-slate-400">השלם את המחשבות שלך על השיעור והמידע הזה יישלח למורה שלך בקליק.</p>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs text-slate-300 mb-1">1. מדוע לדעתך חיוני לשנות באופן ידני את ערך ה-Priority בסיסקו במקום להשאיר את כולם על 32768 כברירת מחדל?</label>
+                                    <textarea id="reflection-q1" class="w-full bg-slate-950 border border-slate-800 rounded p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" rows="2" placeholder="הסבר במילים שלך..."></textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-300 mb-1">2. הסבר בקצרה מה יקרה לפורט החסום (BLK) ברגע שאחד מהכבלים הפעילים האחרים ברשת ייקרע פיזית.</label>
+                                    <textarea id="reflection-q2" class="w-full bg-slate-950 border border-slate-800 rounded p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500" rows="2" placeholder="הסבר בקצרה..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Share card and report exports -->
+                        <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 flex flex-col justify-between">
+                            <div>
+                                <h3 class="font-bold text-white text-base mb-2">שתף הצלחה עם החברים</h3>
+                                <p class="text-xs text-slate-400 mb-4">העתק את קוד ההישג שלך ושתף אותו כדי להראות שחסמת את סופות השידור בהצלחה מרובה!</p>
+                                
+                                <div class="bg-slate-950 p-3 rounded border border-slate-800 code-font text-xs flex justify-between items-center text-emerald-450">
+                                    <span id="share-code">NET-ACAD-CLASS9-PENDING</span>
+                                    <button onclick="copyShareCode()" class="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1">
+                                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                        <span>העתק</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 pt-6 border-t border-slate-800/80 space-y-3">
+                                <button onclick="exportTeacherReport()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-sm transition-all flex items-center justify-center gap-2">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    <span>ייצא דוח מסכם למורה</span>
+                                </button>
+                                <p class="text-[10px] text-slate-400 text-center">בלחיצה כאן יורד קובץ טקסט פשוט שמכיל את התשובות שלך, שאותו תוכל לשלוח למורה.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-900 bg-slate-950 py-4 px-4 text-center">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500">
+            <p>© 2026 NET_ACADEMY - הדרך שלך לרשתות ותקשורת מחשבים</p>
+            <div class="flex gap-4">
+                <span>שיעור 9 מתוך 10</span>
+                <span>•</span>
+                <span class="text-emerald-400 font-bold">RTL תומך באופן מלא</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification system toast -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 border border-emerald-500 text-white px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-emerald-400" id="toast-icon"></i>
+        <span id="toast-message" class="text-sm"></span>
+    </div>
+
+    <!-- MAIN JAVASCRIPT LOGIC -->
+    <script>
+        // State management
+        let xp = 0;
+        let activeStep = 1;
+        let currentLevel = "רב-נתב ואשף NAT";
+        let hasPassedSim = false;
+        let hasPassedAi = false;
+        
+        let activeBlockedLink = 'none';
+
+        const xpCounter = document.getElementById('xp-counter');
+        const userLevel = document.getElementById('user-level');
+        const levelBar = document.getElementById('level-bar');
+        const systemLog = document.getElementById('system-log');
+        const toastEl = document.getElementById('toast');
+        const toastMsg = document.getElementById('toast-message');
+
+        lucide.createIcons();
+
+        window.onload = function() {
+            loadSavedProgress();
+            recalculateStp();
+        };
+
+        function loadSavedProgress() {
+            const savedXp = localStorage.getItem('net_academy_l9_xp');
+            const savedStep = localStorage.getItem('net_academy_l9_step');
+            const savedLevel = localStorage.getItem('net_academy_l9_level');
+            const savedQ1 = localStorage.getItem('net_academy_l9_q1');
+            const savedQ2 = localStorage.getItem('net_academy_l9_q2');
+
+            if (savedXp) {
+                xp = parseInt(savedXp);
+                xpCounter.innerText = xp;
+            } else {
+                xp = 645; // default starting XP from Lesson 8
+                xpCounter.innerText = xp;
+            }
+
+            if (savedLevel) {
+                currentLevel = savedLevel;
+                userLevel.innerText = currentLevel;
+                updateLevelUI();
+            }
+
+            if (savedQ1) document.getElementById('reflection-q1').value = savedQ1;
+            if (savedQ2) document.getElementById('reflection-q2').value = savedQ2;
+
+            if (savedStep) {
+                switchStep(parseInt(savedStep));
+            } else {
+                switchStep(1);
+            }
+            addLog("התקדמות קודמת לשיעור 9 נטענה מהדפדפן.");
+        }
+
+        function saveProgress() {
+            localStorage.setItem('net_academy_l9_xp', xp);
+            localStorage.setItem('net_academy_l9_step', activeStep);
+            localStorage.setItem('net_academy_l9_level', currentLevel);
+            localStorage.setItem('net_academy_l9_q1', document.getElementById('reflection-q1').value);
+            localStorage.setItem('net_academy_l9_q2', document.getElementById('reflection-q2').value);
+        }
+
+        function resetProgress() {
+            if (confirm("האם ברצונך לאפס את התקדמות שיעור 9? כל הניקוד שהושג בשיעור יימחק.")) {
+                localStorage.removeItem('net_academy_l9_xp');
+                localStorage.removeItem('net_academy_l9_step');
+                localStorage.removeItem('net_academy_l9_level');
+                localStorage.removeItem('net_academy_l9_q1');
+                localStorage.removeItem('net_academy_l9_q2');
+                
+                xp = 645;
+                activeStep = 1;
+                hasPassedSim = false;
+                hasPassedAi = false;
+                currentLevel = "רב-נתב ואשף NAT";
+
+                xpCounter.innerText = xp;
+                userLevel.innerText = currentLevel;
+                levelBar.style.width = "90%";
+                
+                document.getElementById('reflection-q1').value = "";
+                document.getElementById('reflection-q2').value = "";
+                
+                document.getElementById('btn-to-step-4').disabled = true;
+                document.getElementById('btn-to-step-5').disabled = true;
+                document.getElementById('sim-feedback').classList.add('hidden');
+                document.getElementById('ai-bonus-alert').classList.add('hidden');
+                
+                // Reset Simulator dropdowns
+                document.getElementById('pri-sw1').value = "32768";
+                document.getElementById('pri-sw2').value = "32768";
+                document.getElementById('pri-sw3').value = "32768";
+                
+                // Reset AI parameters
+                document.getElementById('ai-sw-count').value = "none";
+                document.getElementById('ai-stp-type').value = "none";
+                document.getElementById('ai-target-root').value = "none";
+
+                recalculateStp();
+                switchStep(1);
+                showToast("ההתקדמות בשיעור 9 אופסה.");
+                addLog("כל התקדמות המשתמש בשיעור זה אופסה.");
+            }
+        }
+
+        function switchStep(stepNum) {
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`step-${i}`).classList.add('hidden');
+                const btn = document.getElementById(`btn-step-${i}`);
+                if (btn) {
+                    btn.className = "w-full text-right flex items-center justify-between p-3 rounded-lg bg-slate-900/40 border border-slate-800 text-slate-400 hover:bg-slate-900 hover:text-slate-200 transition-all";
+                }
+            }
+
+            document.getElementById(`step-${stepNum}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`btn-step-${stepNum}`);
+            if (activeBtn) {
+                activeBtn.className = "w-full text-right flex items-center justify-between p-3 rounded-lg bg-emerald-950/30 border border-emerald-500/40 text-emerald-300 transition-all font-bold";
+            }
+
+            activeStep = stepNum;
+            saveProgress();
+            addLog(`מעבר לשלב ${stepNum}.`);
+        }
+
+        function addLog(text) {
+            const time = new Date().toLocaleTimeString('he-IL', { hour12: false });
+            systemLog.innerHTML += `<p>[${time}] ${text}</p>`;
+            systemLog.scrollTop = systemLog.scrollHeight;
+        }
+
+        function showToast(message) {
+            toastMsg.innerText = message;
+            toastEl.classList.remove('translate-y-20', 'opacity-0');
+            toastEl.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toastEl.classList.remove('translate-y-0', 'opacity-100');
+                toastEl.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function addXP(amount) {
+            xp += amount;
+            xpCounter.innerText = xp;
+            
+            if (xp >= 750) {
+                currentLevel = "מנהל רשתות בכיר וארכיטקט STP";
+                levelBar.style.width = "100%";
+            } else if (xp >= 650) {
+                currentLevel = "רב-נתב ואשף NAT";
+                levelBar.style.width = "90%";
+            } else {
+                currentLevel = "מומחה Inter-VLAN";
+                levelBar.style.width = "80%";
+            }
+            
+            userLevel.innerText = currentLevel;
+            updateLevelUI();
+            saveProgress();
+            showToast(`נוספו +${amount} נקודות XP!`);
+        }
+
+        function updateLevelUI() {
+            document.getElementById('share-code').innerText = `NET-ACAD-L9-XP${xp}-${currentLevel.replace(/ /g, '_')}`;
+        }
+
+        // STEP 1: Scenario response
+        function answerScenario(choice) {
+            const feedback = document.getElementById('scenario-feedback');
+            feedback.classList.remove('hidden', 'bg-red-950/40', 'text-red-300', 'bg-emerald-950/40', 'text-emerald-300');
+
+            if (choice === 2) {
+                feedback.className += ' bg-emerald-950/40 text-emerald-300 p-3 rounded-lg text-xs';
+                feedback.innerHTML = `🌟 <b>נכון מאוד!</b> זיהוי קצר חשמלי או רטיבות וניתוק אוטומטי של המפסק הראשי (פיוז) הוא אנלוגיה מצוינת. ה-STP משמש כ"מפסק בטיחות לוגי" שמזהה מעגל סגור פיזי וחוסם אותו כדי להציל את הרשת מקריסה!`;
+                addXP(25);
+                addLog("מענה נכון על חידון אנלוגיית הלופים.");
+            } else {
+                feedback.className += ' bg-red-950/40 text-red-300 p-3 rounded-lg text-xs';
+                feedback.innerHTML = `❌ <b>לא נכון.</b> רמזורים בצומת מווסתים זרימת תנועה תקינה, אך אין בהם אלמנט של חסימה הרמטית ושבירת לופים אינסופיים זדוניים כמו שפרוטוקול STP מבצע בכיבוי לוגי של פורטים.`;
+                addXP(5);
+            }
+        }
+
+        // STEP 3: STP Recalculation engine
+        function recalculateStp() {
+            const pri1 = parseInt(document.getElementById('pri-sw1').value);
+            const pri2 = parseInt(document.getElementById('pri-sw2').value);
+            const pri3 = parseInt(document.getElementById('pri-sw3').value);
+
+            // Clean colors
+            const b1 = document.getElementById('sw1-box');
+            const b2 = document.getElementById('sw2-box');
+            const b3 = document.getElementById('sw3-box');
+
+            b1.className = b1.className.replace(' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20', ' border-slate-700 bg-slate-900');
+            b2.className = b2.className.replace(' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20', ' border-slate-700 bg-slate-900');
+            b3.className = b3.className.replace(' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20', ' border-slate-700 bg-slate-900');
+
+            // Set Priorities text labels
+            document.getElementById('sw1-priority-lbl').innerText = `Pri: ${pri1}`;
+            document.getElementById('sw2-priority-lbl').innerText = `Pri: ${pri2}`;
+            document.getElementById('sw3-priority-lbl').innerText = `Pri: ${pri3}`;
+
+            // Reset SVG lines colors and block indicators
+            document.getElementById('line-1-2').setAttribute('stroke', '#1e293b');
+            document.getElementById('line-1-3').setAttribute('stroke', '#1e293b');
+            document.getElementById('line-2-3').setAttribute('stroke', '#1e293b');
+
+            const blk = document.getElementById('blk-indicator');
+            blk.classList.add('hidden');
+
+            // Recalculating elections:
+            // 1. Root Bridge is the one with LOWEST priority.
+            // 2. If priorities are equal, we check MAC Addresses:
+            // SW1 MAC: 000A... (lowest/best)
+            // SW2 MAC: 000B...
+            // SW3 MAC: 000C...
+
+            let root = 'SW1';
+            let lowestPri = pri1;
+
+            if (pri2 < lowestPri) {
+                root = 'SW2';
+                lowestPri = pri2;
+            } else if (pri2 === lowestPri && root === 'SW1') {
+                // Check MAC (equal Priority) - SW1 wins because of 000A < 000B
+            }
+
+            if (pri3 < lowestPri) {
+                root = 'SW3';
+                lowestPri = pri3;
+            }
+
+            // Set Root Bridge styling
+            if (root === 'SW1') {
+                b1.className = b1.className.replace(' border-slate-700 bg-slate-900', ' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20');
+                addLog("[STP Engine] מתג Switch 1 נבחר כ-Root Bridge (העדיפות/ה-MAC הנמוך ביותר).");
+                
+                // Block link between SW2 and SW3 (furthest from Root)
+                activeBlockedLink = '2-3';
+                document.getElementById('line-1-2').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-1-3').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-2-3').setAttribute('stroke', '#ef4444'); // Blocked
+                
+                // Show Block badge on the bottom line
+                blk.classList.remove('hidden');
+                blk.style.top = '78%';
+                blk.style.left = '42%';
+            } else if (root === 'SW2') {
+                b2.className = b2.className.replace(' border-slate-700 bg-slate-900', ' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20');
+                addLog("[STP Engine] מתג Switch 2 נבחר כ-Root Bridge.");
+                
+                // Block link between SW1 and SW3
+                activeBlockedLink = '1-3';
+                document.getElementById('line-1-2').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-2-3').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-1-3').setAttribute('stroke', '#ef4444'); // Blocked
+                
+                blk.classList.remove('hidden');
+                blk.style.top = '40%';
+                blk.style.left = '56%';
+            } else {
+                b3.className = b3.className.replace(' border-slate-700 bg-slate-900', ' border-emerald-500 bg-emerald-950/20 shadow-emerald-500/20');
+                addLog("[STP Engine] מתג Switch 3 נבחר כ-Root Bridge.");
+                
+                // Block link between SW1 and SW2
+                activeBlockedLink = '1-2';
+                document.getElementById('line-1-3').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-2-3').setAttribute('stroke', '#22c55e');
+                document.getElementById('line-1-2').setAttribute('stroke', '#ef4444'); // Blocked
+                
+                blk.classList.remove('hidden');
+                blk.style.top = '40%';
+                blk.style.left = '32%';
+            }
+        }
+
+        function triggerStpTest() {
+            const pri1 = parseInt(document.getElementById('pri-sw1').value);
+            const pri2 = parseInt(document.getElementById('pri-sw2').value);
+            const pri3 = parseInt(document.getElementById('pri-sw3').value);
+
+            const storm = document.getElementById('storm-overlay');
+            const feedback = document.getElementById('sim-feedback');
+            
+            feedback.classList.remove('hidden', 'bg-red-950/40', 'text-red-300', 'bg-emerald-950/40', 'text-emerald-300');
+
+            // Loop crash condition: If priorities of all switches are equal (32768) and user DID NOT modify anything, we simulate loop crash FIRST to show them the problem, then they fix it.
+            // If they modify at least one Priority (e.g. setting Root), we show successful STP active.
+            const isModified = (pri1 === 4096 || pri2 === 4096 || pri3 === 4096 || pri1 === 61440 || pri2 === 61440 || pri3 === 61440);
+
+            if (!isModified) {
+                // Broadcast Storm crash simulation
+                storm.classList.remove('hidden');
+                addLog("[ALERT] סופת שידור (Broadcast Storm) זוהתה במעגל! חבילות משתכפלות בלי סוף!");
+                addLog("[ALERT] עומס מעבדים: 100%. רוחב פס: 0MB זמין. הרשת קרסה לחלוטין!");
+
+                feedback.className += ' bg-red-950/40 text-red-300';
+                feedback.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">⚠️</span>
+                        <div>
+                            <p class="font-bold">סופת שידור פעילה! הרשת קרסה לחלוטין.</p>
+                            <p class="text-[11px] opacity-90">השארתם את כל המתגים על עדיפות ברירת המחדל (Priority 32768). ללא התערבות וקביעת מתג ראשי מוגדר (כמו הפיכת אחד המתגים ל-4096), חילופי ה-BPDU איטיים וסופת השידור מפרקת את המעגל לפני שה-STP מספיק להתייצב. שנה את עדיפות אחד המתגים כדי לייצב את הרשת!</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // STP Successfully blocked the loop
+                storm.classList.add('hidden');
+                addLog("[STP Monitor] שידור ה-Broadcast עבר בהצלחה. פורט חסום BLK מנע את השתכפלות החבילה במעגל.");
+                
+                feedback.className += ' bg-emerald-950/40 text-emerald-300';
+                feedback.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">🌟</span>
+                        <div>
+                            <p class="font-bold">אלגוריתם STP הופעל בהצלחה! הרשת יציבה ושרידה.</p>
+                            <p class="text-[11px] opacity-90">מעולה! קבעתם מתג ראשי מוגדר בעזרת הורדת ה-Priority שלו ל-4096. פרוטוקול STP ביצע מיפוי מהיר, חסם לוגית את הכבל בצבע האדום (BLK) ושבר את הלופ הפיזי. אם אחד הכבלים הירוקים ייקרע כעת, הכבל האדום ייפתח אוטומטית לעבודה תוך שבריר שנייה!</p>
+                        </div>
+                    </div>
+                `;
+
+                if (!hasPassedSim) {
+                    addXP(50);
+                    hasPassedSim = true;
+                }
+                document.getElementById('btn-to-step-4').disabled = false;
+            }
+        }
+
+        // STEP 4: AI Lab Assistant Generator
+        function updatePromptPreview() {
+            const count = document.getElementById('ai-sw-count').value;
+            const type = document.getElementById('ai-stp-type').value;
+            const root = document.getElementById('ai-target-root').value;
+            const preview = document.getElementById('prompt-preview');
+
+            if (count === 'none' && type === 'none' && root === 'none') {
+                preview.innerText = "בחר דרישות משמאל כדי לבנות פרומפט הנחיה ל-AI...";
+                return;
+            }
+
+            let countStr = count === 'none' ? "[כמות מתגים]" : `${count} Switches במעגל סגור`;
+            let typeStr = type === 'none' ? "[פרוטוקול STP]" : `השתמש בפרוטוקול ${type.toUpperCase()}`;
+            let rootStr = root === 'none' ? "[מתג ראשי רצוי]" : `קבע את ${root.toUpperCase()} כ-Root Bridge`;
+
+            preview.innerText = `הנחיה לבוט המעבדה:
+חולל עבורי מדריך מעבדה מקיף לפאקט טרייסר הכולל:
+- טופולוגיה של ${countStr}.
+- הגדרות: ${typeStr}.
+- חוקי בחירה: ${rootStr} על ידי שינוי Priority.
+- דרישות: שלבי אימות פקודות (show spanning-tree).`;
+        }
+
+        function runStpLabGenerator() {
+            const count = document.getElementById('ai-sw-count').value;
+            const type = document.getElementById('ai-stp-type').value;
+            const root = document.getElementById('ai-target-root').value;
+            const responseBox = document.getElementById('ai-response-box');
+
+            if (count === 'none' || type === 'none' || root === 'none') {
+                responseBox.innerHTML = "<p class='text-red-400 font-bold'>⚠️ שגיאה: עליכם לבחור את כל שלושת פרמטרי המעבדה כדי שה-AI יוכל לחולל מדריך שלם!</p>";
+                return;
+            }
+
+            addLog("מעביר דרישות לעוזר המעבדה ה-AI...");
+            responseBox.innerHTML = "<p class='text-slate-500 italic animate-pulse'>ה-AI מחשב טופולוגיה, פקודות סיסקו ובונה מדריך מעבדה שלם לפאקט טרייסר...</p>";
+
+            setTimeout(() => {
+                let content = `
+                    <h4 class="font-bold text-emerald-400 mb-2">📋 מדריך מעבדה: קונפיגורציית STP שרידה</h4>
+                    <p class="mb-2 text-[10px] text-slate-400"><b>סוג פרוטוקול:</b> ${type === 'pvst' ? 'Spanning-Tree PVST+' : 'Rapid Spanning-Tree (PVRST)'}</p>
+                    
+                    <div class="space-y-3 font-sans text-xs">
+                        <p class="font-bold text-white">שלב 1: חיבור הטופולוגיה בפאקט טרייסר</p>
+                        <p class="text-slate-350">מקם ${count} מתגים מסוג Cisco 2960 וחבר אותם במעגל סגור באמצעות כבלי Copper Cross-Over על גבי פורטים FastEthernet 0/1 ו-0/2.</p>
+                        
+                        <p class="font-bold text-white">שלב 2: קביעת ה-Root Bridge הראשי</p>
+                        <p class="text-slate-350">היכנס ל-CLI של ${root.toUpperCase()} והקלד את הפקודה הבאה כדי להבטיח את ניצחונו בבחירות:</p>
+                        <pre class="bg-black p-2 rounded text-emerald-450 text-[10px] font-mono">
+${root.toUpperCase()}(config)# spanning-tree vlan 1 priority 4096</pre>
+
+                        <p class="font-bold text-white">שלב 3: הפעלת מצב מהיר (Rapid STP)</p>
+                        <p class="text-slate-350">כדי למנוע עיכובים של 30 שניות במעבר פורטים, הגדר את מצב ה-Rapid בכל המתגים:</p>
+                        <pre class="bg-black p-2 rounded text-emerald-450 text-[10px] font-mono">
+Switch(config)# spanning-tree mode rapid-pvst</pre>
+
+                        <p class="font-bold text-white">שלב 4: בדיקת אימות בטרמינל</p>
+                        <p class="text-slate-350">הקלד את פקודת האימות הבאה כדי לראות איזה פורט נחסם פיזית (Altn BLK):</p>
+                        <pre class="bg-black p-2 rounded text-emerald-450 text-[10px] font-mono">
+Switch# show spanning-tree</pre>
+                    </div>
+                `;
+
+                responseBox.innerHTML = content;
+
+                if (!hasPassedAi) {
+                    hasPassedAi = true;
+                    addXP(100);
+                    document.getElementById('ai-bonus-alert').classList.remove('hidden');
+                    document.getElementById('btn-to-step-5').disabled = false;
+                    addLog("עוזר המעבדה ה-AI חולל בהצלחה מדריך תרחיש פאקט טרייסר.");
+                }
+
+            }, 1800);
+        }
+
+        // Copy Share Code
+        function copyShareCode() {
+            const code = document.getElementById('share-code').innerText;
+            const tempInput = document.createElement("input");
+            tempInput.value = code;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            showToast("קוד ההישג הועתק בהצלחה! שלח לחבר.");
+            addLog("קוד שיתוף הועתק ללוח.");
+        }
+
+        // Export Report to Teacher
+        function exportTeacherReport() {
+            const q1 = document.getElementById('reflection-q1').value;
+            const q2 = document.getElementById('reflection-q2').value;
+            
+            if (!q1 || !q2) {
+                alert("נא למלא את שתי שאלות הרפלקציה לפני שמייצאים דוח למורה!");
+                return;
+            }
+
+            const reportText = `
+=============================================
+דוח מסכם - שיעור 9: פרוטוקול STP ומניעת לופים
+=============================================
+שם התלמיד: [נא להקליד שם מלא כאן]
+דירוг XP סופי: ${xp} XP
+דרגה נוכחית: ${currentLevel}
+
+תשובות לרפלקציה:
+---------------------------------------------
+1. מדוע חיוני לשנות באופן ידני את ערך ה-Priority בסיסקו במקום להשאיר את ברירת המחדל?
+תשובה: ${q1}
+
+2. מה יקרה לפורט החסום (BLK) ברגע שאחד מהכבלים הפעילים האחרים ייקרע?
+תשובה: ${q2}
+
+---------------------------------------------
+מיוצר עבור מורה תקשורת ורשתות - NET_ACADEMY
+=============================================
+            `;
+
+            const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `NET_ACADEMY_Lesson9_Report.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showToast("דוח פעילות הורד! העבר אותו למורה שלך.");
+            addLog("דוח פעילות הופק והורד למחשב המשתמש.");
+        }
+    </script>
+
+<!-- כפתור עזרה צף קבוע בפינה התחתונה עם אווטר מובנה -->
+<div class="fixed bottom-6 left-6 z-50 no-print">
+    <button id="openHelpModalBtn" class="flex items-center gap-3 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white font-bold py-2 px-4 rounded-full shadow-lg shadow-cyan-500/20 transition-all duration-300 transform hover:scale-105 group border border-cyan-400/30">
+        <!-- אווטר קטן בתוך הכפתור -->
+        <div class="w-8 h-8 rounded-full border border-white/40 overflow-hidden bg-slate-950 flex-shrink-0 shadow-inner">
+            <img src="https://lh3.googleusercontent.com/d/1fzqv93VKIW_VT8-e1HdJxBmbU2sFnwlb" alt="אווטר בוט עזרה" class="w-full h-full object-cover">
+        </div>
+        <span>בוט עזרה</span>
+    </button>
+</div>
+
+<!-- חלונית עזרה צפה (Modal) עם אווטר מורחב -->
+<div id="helpModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 transition-all duration-300">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full text-center relative shadow-2xl shadow-cyan-500/5 transform scale-95 transition-transform duration-300" id="helpModalContent">
+        <!-- כפתור סגירה X -->
+        <button id="closeHelpModalBtn" class="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-800">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <!-- אווטר התמונה בחלונית -->
+        <div class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-cyan-400/50 p-1 bg-slate-950 shadow-lg shadow-cyan-500/20 overflow-hidden">
+            <img src="https://lh3.googleusercontent.com/d/1fzqv93VKIW_VT8-e1HdJxBmbU2sFnwlb" alt="תמונת בוט עזרה" class="w-full h-full object-cover rounded-full">
+        </div>
+
+        <h3 class="text-lg font-black text-white mb-2">צריך עזרה במשימה?</h3>
+        <p class="text-sm text-slate-400 mb-6 leading-relaxed">בוט העזרה הרשמי של האקדמיה זמין כעת כדי לענות על שאלות, להסביר מושגים ולכוון אותך לפתרון המלא!</p>
+        
+        <!-- כפתור הפניה לקישור הבוט -->
+        <a href="https://gemini.google.com/gem/167016ac4a4b/66c3b83daa7940ef?usp=sharing" target="_blank" class="w-full flex items-center justify-center gap-2 bg-cyan-500 hover:bg-cyan-600 text-slate-950 font-black py-3 px-4 rounded-xl transition-all duration-200 shadow-lg shadow-cyan-500/10">
+            <span>הפעל את בוט העזרה</span>
+            <i data-lucide="external-link" class="w-4 h-4"></i>
+        </a>
+    </div>
+</div>
+
+<!-- סקריפט להפעלת החלונית -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const modal = document.getElementById('helpModal');
+        const modalContent = document.getElementById('helpModalContent');
+        const openBtn = document.getElementById('openHelpModalBtn');
+        const closeBtn = document.getElementById('closeHelpModalBtn');
+
+        if(openBtn && modal && modalContent && closeBtn) {
+            openBtn.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+                setTimeout(() => modalContent.classList.remove('scale-95'), 10);
+            });
+
+            closeBtn.addEventListener('click', () => {
+                modalContent.classList.add('scale-95');
+                setTimeout(() => modal.classList.add('hidden'), 150);
+            });
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modalContent.classList.add('scale-95');
+                    setTimeout(() => modal.classList.add('hidden'), 150);
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
